@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucid Lines Studio | Kamal Raj - Psychedelic Murals & Doodle Art</title>
+
+    <!-- PASTE YOUR GOOGLE ANALYTICS GLOBAL SITE TAG (gtag.js) HERE -->
+    <!-- It will look something like this: -->
+    <!-- 
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YOUR_ID_HERE"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YOUR_ID_HERE');
+    </script> 
+    -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --glow-color: #2dd4bf;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes background-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #111827);
+            background-size: 400% 400%;
+            animation: background-pan 15s ease infinite;
+            color: #f3f4f6;
+        }
+        
+        .font-brand {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .neon-accent {
+            color: var(--glow-color);
+            text-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: background 0.3s, border 0.3s, transform 0.3s;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.5);
+            transform: translateY(-5px);
+        }
+
+        .gallery-item {
+            position: relative;
+        }
+        
+        .gallery-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 0.5rem; 
+            border: 2px solid transparent;
+            background: conic-gradient(from var(--angle), #111827, #302b63, #2dd4bf, #302b63, #111827) border-box;
+            -webkit-mask:
+                linear-gradient(#fff 0 0) padding-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: rotate 6s linear infinite;
+            opacity: 0;
+            transition: opacity 0.4s;
+            --angle: 0deg;
+        }
+
+        .gallery-item:hover::before {
+            opacity: 1;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            opacity: 1;
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .scroll-animate {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+            transform: translateY(20px);
+        }
+        .scroll-animate.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+        #hero-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        /* New Styles for Visualizer and WhatsApp */
+        .visualizer-modal {
+            background: rgba(15, 12, 41, 0.9);
+            backdrop-filter: blur(15px);
+        }
+        #room-bg-container {
+            width: 100%;
+            height: 100%;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        #draggable-artwork {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+            border: 2px dashed var(--glow-color);
+            box-shadow: 0 0 20px rgba(45, 212, 191, 0.5);
+        }
+        .resize-handle {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: var(--glow-color);
+            border: 2px solid #0f0c29;
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .resize-handle.br { bottom: -7.5px; right: -7.5px; cursor: se-resize; }
+        .whatsapp-fab {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 100;
+            transition: transform 0.3s ease-in-out;
+        }
+        .whatsapp-fab:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-md border-b border-gray-500/20">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <a href="#" class="text-2xl font-black tracking-wider uppercase neon-accent font-brand">Lucid Lines</a>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-gray-300 hover:text-teal-400 transition duration-300">About</a>
+                    <a href="#portfolio" class="text-gray-300 hover:text-teal-400 transition duration-300">Portfolio</a>
+                    <a href="#services" class="text-gray-300 hover:text-teal-400 transition duration-300">Services</a>
+                    <a href="#testimonials" class="text-gray-300 hover:text-teal-400 transition duration-300">Testimonials</a>
+                    <a href="#contact" class="text-gray-300 hover:text-teal-400 transition duration-300">Contact</a>
+                </nav>
+                 <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-teal-400 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-black/50 backdrop-blur-md">
+            <a href="#about" class="block text-center py-3 px-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-teal-400">About</a>
+            <a href="#portfolio" class="block text-center py-3 px-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-teal-400">Portfolio</a>
+            <a href="#services" class="block text-center py-3 px-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-teal-400">Services</a>
+            <a href="#testimonials" class="block text-center py-3 px-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-teal-400">Testimonials</a>
+            <a href="#contact" class="block text-center py-3 px-4 text-sm text-gray-300 hover:bg-gray-800 hover:text-teal-400">Contact</a>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section id="home" class="h-screen relative flex items-center justify-center overflow-hidden">
+             <canvas id="hero-canvas"></canvas>
+            <div class="text-center z-10 p-4">
+                <h1 class="text-5xl md:text-8xl font-black uppercase text-white tracking-wider font-brand">Kamal Raj</h1>
+                <p class="mt-4 text-xl md:text-3xl text-teal-400 font-bold neon-accent">Where Psychedelic Art Meets Urban Walls</p>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-20 md:py-32 scroll-animate">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-4xl font-bold mb-4 uppercase font-brand">The Artist</h2>
+                <div class="w-24 h-1 bg-teal-500 mx-auto mb-12 shadow-[0_0_15px_var(--glow-color)]"></div>
+                <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center gap-12">
+                     <img src="https://i.postimg.cc/KvbG7kLZ/kamal-portrait.png" alt="Artist Kamal Raj" class="w-48 h-48 rounded-full object-cover shadow-lg shadow-black/50 border-4 border-gray-700">
+                    <p class="text-lg text-gray-300 text-left">
+                        I'm Kamal Raj, a versatile, self-taught artist specializing in detailed doodles, psychedelic murals, and vibrant UV paintings. My passion is to transform spaces and bring visions to life. Through my art group, the Greenape Project, and collaborations with numerous artists, I've honed a unique style that blends intricate detail with bold, mind-bending visuals. I have extensive experience with commissioned art, creating commercial graffiti and custom pieces for coffee shops, hotels, restaurants, gyms, pubs, and residential spaces.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Portfolio Section -->
+        <section id="portfolio" class="py-20 md:py-32 scroll-animate">
+            <div class="container mx-auto px-6">
+                <h2 class="text-4xl font-bold text-center mb-4 uppercase font-brand">Portfolio</h2>
+                <div class="w-24 h-1 bg-teal-500 mx-auto mb-12 shadow-[0_0_15px_var(--glow-color)]"></div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Gallery Item 1 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/2jqXS2Kf/leela-palace.jpg" alt="Luxury Hotel Mural at The Leela Palace" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Luxury Hotel Mural</h3><p class="text-sm mb-4">The Leela Palace</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/2jqXS2Kf/leela-palace.jpg">Preview on Your Wall</button></div></div>
+                    </div>
+                    <!-- Gallery Item 2 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/v8p2gfJw/Kodaikanal-toon-doodle.jpg" alt="Kodaikanal Toon Doodle" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Kodaikanal Toon Doodle</h3><p class="text-sm mb-4">Detailed Illustration</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/v8p2gfJw/Kodaikanal-toon-doodle.jpg">Preview on Your Wall</button></div></div>
+                    </div>
+                    <!-- Gallery Item 3 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/wxtbj0bZ/564586483-10230059737183807-7344587208309768062-n.jpg" alt="UV Reactive Mural" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Cosmic UV Blacklight</h3><p class="text-sm mb-4">UV Reactive Mural</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/wxtbj0bZ/564586483-10230059737183807-7344587208309768062-n.jpg">Preview on Your Wall</button></div></div>
+                    </div>
+                    <!-- Gallery Item 4 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/qBtZvjZQ/561636576-10230070061881918-9108392314590552692-n.jpg" alt="Astral Explorer commercial mural" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Astral Explorer</h3><p class="text-sm mb-4">Commercial Mural</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/qBtZvjZQ/561636576-10230070061881918-9108392314590552692-n.jpg">Preview on Your Wall</button></div></div>
+                    </div>
+                     <!-- Gallery Item 5 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/Rhnfx3Gr/79f1cb53679259-593d7b870cfe0.webp" alt="Visionary Digital Art" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Visionary Digital Art</h3><p class="text-sm mb-4">Commissioned Artwork</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/Rhnfx3Gr/79f1cb53679259-593d7b870cfe0.webp">Preview on Your Wall</button></div></div>
+                    </div>
+                     <!-- Gallery Item 6 -->
+                    <div class="group relative overflow-hidden rounded-lg shadow-lg cursor-pointer gallery-item">
+                        <img src="https://i.postimg.cc/WtLZN2fc/465715370-10226363542341246-6649440871263706178-n.jpg" alt="Kinetic Gym Mural" class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500 rounded-lg">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 gallery-overlay transition-opacity duration-500 rounded-lg p-4"><div class="text-center text-white"><h3 class="text-xl font-bold">Kinetic Gym Mural</h3><p class="text-sm mb-4">Commercial Graffiti</p><button class="visualizer-btn text-xs bg-teal-500 text-black font-bold py-2 px-3 rounded-lg" data-artwork-src="https://i.postimg.cc/WtLZN2fc/465715370-10226363542341246-6649440871263706178-n.jpg">Preview on Your Wall</button></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section (no changes) -->
+        <section id="services" class="py-20 md:py-32 scroll-animate"><!-- ... --></section>
+        <!-- Testimonials Section (no changes) -->
+        <section id="testimonials" class="py-20 md:py-32 scroll-animate"><!-- ... --></section>
+        <!-- Contact Section (no changes) -->
+        <section id="contact" class="py-20 md:py-32 scroll-animate"><!-- ... --></section>
+    </main>
+
+    <footer class="border-t border-gray-500/20">
+        <div class="container mx-auto px-6 py-8 text-center text-gray-400">
+            <p>&copy; 2025 Lucid Lines Studio by Kamal Raj. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- NEW: WhatsApp Floating Action Button -->
+    <a href="https://wa.me/919880677291?text=Hello!%20I%20saw%20your%20portfolio%20and%20I'm%20interested%20in%20your%20artwork." target="_blank" class="whatsapp-fab" aria-label="Chat on WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16" viewBox="0 0 448 512" fill="#25D366"><path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.8 0-67.6-9.5-97.2-26.7l-7-4.1-72.2 19L56 353.7l-4.4-7.3c-18.1-29.7-27.9-63.3-27.9-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7.9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/></svg>
+    </a>
+
+    <!-- NEW: Art Visualizer Modal -->
+    <div id="visualizer-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center visualizer-modal p-4">
+        <div class="relative w-full h-full max-w-7xl max-h-[90vh] flex flex-col items-center justify-center">
+            <!-- Close Button -->
+            <button id="close-visualizer" class="absolute -top-2 -right-2 z-50 bg-teal-500 text-black rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold">&times;</button>
+            
+            <!-- Main Content Area -->
+            <div id="room-bg-container" class="w-full h-full relative border-2 border-dashed border-gray-600 rounded-lg flex items-center justify-center overflow-hidden">
+                <!-- Initial Prompt to Upload -->
+                <div id="upload-prompt" class="text-center text-white p-8 glass-card rounded-lg">
+                    <h3 class="text-2xl font-bold mb-4">See It On Your Wall</h3>
+                    <p class="mb-6">Upload a photo of your room to get started.</p>
+                    <label for="room-upload-input" class="cursor-pointer bg-teal-500 text-gray-900 font-bold py-3 px-6 rounded-lg shadow-lg hover:bg-teal-400 transition-all duration-300 uppercase">
+                        Choose Your Room Photo
+                    </label>
+                    <input type="file" id="room-upload-input" class="hidden" accept="image/*">
+                </div>
+                
+                <!-- Draggable Artwork (will be populated by JS) -->
+                <div id="draggable-artwork" class="hidden">
+                    <img id="artwork-img" src="" alt="Selected Artwork" class="w-full h-full object-contain">
+                    <div class="resize-handle br"></div>
+                </div>
+            </div>
+             <!-- Help Text -->
+            <p id="visualizer-help-text" class="hidden absolute bottom-0 text-center text-sm text-gray-400 p-2 bg-black/50 rounded-md">Tip: Drag the artwork to move it, or use the corner handle to resize.</p>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- Mobile Menu Toggle ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+            mobileMenu.querySelectorAll('a').forEach(link => link.addEventListener('click', () => mobileMenu.classList.add('hidden')));
+
+            // --- Scroll Animations ---
+            const scrollAnimateElements = document.querySelectorAll('.scroll-animate');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            }, { threshold: 0.1 });
+            scrollAnimateElements.forEach(element => observer.observe(element));
+
+            // --- Animated Borders for Gallery ---
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                item.addEventListener('mousemove', e => {
+                    const rect = item.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    item.style.setProperty('--angle', `${Math.atan2(y - rect.height / 2, x - rect.width / 2) * 180 / Math.PI + 180}deg`);
+                });
+            });
+
+            // --- Interactive Hero Canvas ---
+            const canvas = document.getElementById('hero-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particlesArray;
+            const mouse = { x: null, y: null, radius: (canvas.height/120) * (canvas.width/120) };
+
+            window.addEventListener('mousemove', event => { mouse.x = event.x; mouse.y = event.y; });
+            window.addEventListener('resize', () => {
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+                mouse.radius = (canvas.height/120) * (canvas.width/120);
+                init();
+            });
+            window.addEventListener('mouseout', () => { mouse.x = undefined; mouse.y = undefined; });
+
+            class Particle {
+                constructor(x, y, dX, dY, size) {
+                    this.x = x; this.y = y; this.directionX = dX; this.directionY = dY; this.size = size;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                    ctx.fillStyle = 'rgba(45, 212, 191, 0.5)';
+                    ctx.fill();
+                }
+                update() {
+                    if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+                    if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+                    let dx = mouse.x - this.x; let dy = mouse.y - this.y;
+                    let distance = Math.sqrt(dx*dx + dy*dy);
+                    if (distance < mouse.radius + this.size){
+                        if(mouse.x < this.x && this.x < canvas.width - this.size * 10) this.x += 3;
+                        if(mouse.x > this.x && this.x > this.size * 10) this.x -= 3;
+                        if(mouse.y < this.y && this.y < canvas.height - this.size * 10) this.y += 3;
+                        if(mouse.y > this.y && this.y > this.size * 10) this.y -= 3;
+                    }
+                    this.x += this.directionX; this.y += this.directionY;
+                    this.draw();
+                }
+            }
+
+            function init() {
+                particlesArray = [];
+                let numParticles = (canvas.height * canvas.width) / 9000;
+                for (let i = 0; i < numParticles; i++) {
+                    let size = (Math.random() * 2) + 1;
+                    let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                    let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                    let dX = (Math.random() * 0.4) - 0.2;
+                    let dY = (Math.random() * 0.4) - 0.2;
+                    particlesArray.push(new Particle(x, y, dX, dY, size));
+                }
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                ctx.clearRect(0,0,innerWidth, innerHeight);
+                particlesArray.forEach(p => p.update());
+                connect();
+            }
+
+            function connect() {
+                for (let a = 0; a < particlesArray.length; a++) {
+                    for (let b = a; b < particlesArray.length; b++) {
+                        let distance = ((particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x)) + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                        if (distance < (canvas.width/7) * (canvas.height/7)) {
+                            let opacity = 1 - (distance/20000);
+                            ctx.strokeStyle = `rgba(45, 212, 191, ${opacity})`;
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            init(); animate();
+
+            // --- NEW: ART VISUALIZER LOGIC ---
+            const visualizerModal = document.getElementById('visualizer-modal');
+            const closeVisualizerBtn = document.getElementById('close-visualizer');
+            const visualizerBtns = document.querySelectorAll('.visualizer-btn');
+            const roomBgContainer = document.getElementById('room-bg-container');
+            const roomUploadInput = document.getElementById('room-upload-input');
+            const uploadPrompt = document.getElementById('upload-prompt');
+            const draggableArtwork = document.getElementById('draggable-artwork');
+            const artworkImg = document.getElementById('artwork-img');
+            const helpText = document.getElementById('visualizer-help-text');
+
+            visualizerBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const artworkSrc = e.target.getAttribute('data-artwork-src');
+                    artworkImg.src = artworkSrc;
+                    visualizerModal.classList.remove('hidden');
+                });
+            });
+
+            const closeVisualizer = () => {
+                visualizerModal.classList.add('hidden');
+                // Reset state
+                roomBgContainer.style.backgroundImage = '';
+                uploadPrompt.classList.remove('hidden');
+                draggableArtwork.classList.add('hidden');
+                helpText.classList.add('hidden');
+                roomUploadInput.value = ''; // Clear file input
+            }
+            closeVisualizerBtn.addEventListener('click', closeVisualizer);
+            visualizerModal.addEventListener('click', (e) => {
+                if (e.target === visualizerModal) closeVisualizer();
+            });
+
+            roomUploadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        roomBgContainer.style.backgroundImage = `url('${event.target.result}')`;
+                        uploadPrompt.classList.add('hidden');
+                        // Set initial size and position of artwork
+                        const containerRect = roomBgContainer.getBoundingClientRect();
+                        const initialSize = Math.min(containerRect.width, containerRect.height) * 0.4;
+                        draggableArtwork.style.width = `${initialSize}px`;
+                        draggableArtwork.style.height = `${initialSize}px`;
+                        draggableArtwork.style.top = `${(containerRect.height - initialSize) / 2}px`;
+                        draggableArtwork.style.left = `${(containerRect.width - initialSize) / 2}px`;
+                        draggableArtwork.classList.remove('hidden');
+                        helpText.classList.remove('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // --- Draggable & Resizable Logic ---
+            let isDragging = false, isResizing = false;
+            let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+            let initialWidth, initialHeight;
+
+            const dragStart = (e) => {
+                e.preventDefault();
+                initialX = e.type === 'touchstart' ? e.touches[0].clientX - xOffset : e.clientX - xOffset;
+                initialY = e.type === 'touchstart' ? e.touches[0].clientY - yOffset : e.clientY - yOffset;
+                if (e.target === draggableArtwork || e.target.parentNode === draggableArtwork) {
+                    isDragging = true;
+                }
+            };
+            const dragEnd = () => { isDragging = false; };
+            const drag = (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.type === 'touchmove' ? e.touches[0].clientX - initialX : e.clientX - initialX;
+                    currentY = e.type === 'touchmove' ? e.touches[0].clientY - initialY : e.clientY - initialY;
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    setTranslate(currentX, currentY, draggableArtwork);
+                }
+            };
+            const setTranslate = (xPos, yPos, el) => { el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`; };
+            
+            draggableArtwork.addEventListener('mousedown', dragStart);
+            draggableArtwork.addEventListener('touchstart', dragStart);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag);
+
+            const resizeHandle = draggableArtwork.querySelector('.resize-handle.br');
+            const resizeStart = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                isResizing = true;
+                initialX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                initialY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                initialWidth = draggableArtwork.offsetWidth;
+                initialHeight = draggableArtwork.offsetHeight;
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('touchmove', resize);
+                document.addEventListener('mouseup', resizeEnd);
+                document.addEventListener('touchend', resizeEnd);
+            };
+            const resize = (e) => {
+                if (isResizing) {
+                    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                    const dx = clientX - initialX;
+                    const dy = clientY - initialY;
+                    const newWidth = initialWidth + dx;
+                    const newHeight = initialHeight + dy;
+                    // Maintain aspect ratio
+                    const aspectRatio = initialWidth / initialHeight;
+                    if (newWidth / newHeight > aspectRatio) {
+                        draggableArtwork.style.width = newHeight * aspectRatio + 'px';
+                        draggableArtwork.style.height = newHeight + 'px';
+
+                    } else {
+                         draggableArtwork.style.width = newWidth + 'px';
+                         draggableArtwork.style.height = newWidth / aspectRatio + 'px';
+                    }
+                }
+            };
+            const resizeEnd = () => {
+                isResizing = false;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('touchmove', resize);
+            };
+            resizeHandle.addEventListener('mousedown', resizeStart);
+            resizeHandle.addEventListener('touchstart', resizeStart);
+        });
+    </script>
+</body>
+</html>
